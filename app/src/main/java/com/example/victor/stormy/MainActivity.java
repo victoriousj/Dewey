@@ -1,12 +1,18 @@
 package com.example.victor.stormy;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -24,11 +30,18 @@ public class MainActivity extends AppCompatActivity {
     double longitude = -122.423;
     private String weatherString = "https://api.forecast.io/forecast/"
             + apiKey + "/" + latitude + "," + longitude;
+    private CurrentWeather mCurrentWeather;
 
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //set the status bar color to the same color as the background
+        Window window = getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(Color.parseColor("#FFFC970B"));
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Log.v(TAG, "app started");
@@ -48,10 +61,19 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    Log.v(TAG, response.body().string());
-                    if (response.isSuccessful()) {
-                    } else {
-                        alertUserAboutError();
+                    try {
+                        String jsonDate = response.body().string();
+                        Log.v(TAG, jsonDate);
+                        if (response.isSuccessful()) {
+                            mCurrentWeather = getCurrentDetails(jsonDate);
+                        } else {
+                            alertUserAboutError();
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Exception caught: " + e);
+                    }
+                    catch ( JSONException e) {
+                        Log.e(TAG, "Exception caught: " + e);
                     }
                 }
             });
@@ -61,6 +83,29 @@ public class MainActivity extends AppCompatActivity {
             AlertUserAboutConnectivityIssue();
         }
         Log.d(TAG, "Main UI Code is running");
+    }
+
+    private CurrentWeather getCurrentDetails(String jsonDate) throws JSONException{
+        JSONObject jsonObject = new JSONObject(jsonDate);
+
+        String timeZone = jsonObject.getString("timezone");
+
+        Log.i(TAG, timeZone);
+
+        JSONObject currently = jsonObject.getJSONObject("currently");
+
+        CurrentWeather weather = new CurrentWeather();
+        weather.setTimeZone(timeZone);
+        weather.setHumidity(currently.getDouble("humidity"));
+        weather.setTime(currently.getLong("time"));
+        weather.setIcon(currently.getString("icon"));
+        weather.setPrecipe(currently.getDouble("precipProbability"));
+        weather.setSummary(currently.getString("summary"));
+        weather.setTemperture(currently.getDouble("temperature"));
+
+        Log.d(TAG, weather.getFormattedTime());
+
+        return weather;
     }
 
     private void AlertUserAboutConnectivityIssue() {
