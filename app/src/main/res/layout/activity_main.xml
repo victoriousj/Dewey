@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:text="100"
+        android:text="--"
         android:textColor="@android:color/white"
         android:textSize="150sp" />
 
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/temperatureLabel"
         android:layout_centerHorizontal="true"
-        android:text="At 5:00pm it will be"
+        android:text="..."
         android:textColor="#88ffffff"
         android:textSize="18sp" />
 
@@ -44,7 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/timeLabel"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="60dp"
+        android:layout_marginBottom="50dp"
         android:text="Minneapolis, MN"
         android:textColor="@android:color/white"
         android:textSize="24sp" />
@@ -86,7 +86,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:text="0.88"
+                android:text="--"
                 android:textColor="#FFFFFF"
                 android:textSize="24sp" />
         </LinearLayout>
@@ -110,7 +110,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:text="100%"
+                android:text="--"
                 android:textColor="#FFFFFF"
                 android:textSize="24sp" />
         </LinearLayout>
@@ -118,15 +118,31 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/textView8"
+        android:id="@+id/summaryLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/linearLayout"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="40dp"
+        android:layout_marginBottom="50dp"
         android:gravity="center_horizontal"
-        android:text="Stormy with a chance of meatballs"
+        android:text="Getting Weather..."
         android:textColor="#FFFFFF"
         android:textSize="18sp" />
+
+    <ImageView
+        android:id="@+id/refreshImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        app:srcCompat="@drawable/refresh" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/refreshImageView"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>
