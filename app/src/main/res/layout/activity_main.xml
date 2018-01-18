@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#FFFC970B"
     android:padding="32dp"
-    tools:context="com.example.victor.stormy.MainActivity">
+    tools:context="com.example.victor.stormy.weather.ui.MainActivity">
 
     <ImageView
         android:id="@+id/imageView"
@@ -45,7 +45,7 @@
         android:layout_above="@+id/timeLabel"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="50dp"
-        android:text="Minneapolis, MN"
+        android:text="--"
         android:textColor="@android:color/white"
         android:textSize="24sp" />
 

@@ -1,11 +1,13 @@
-package com.example.victor.stormy;
+package com.example.victor.stormy.weather;
 
+
+import com.example.victor.stormy.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class CurrentWeather {
+public class Current {
     public String mIcon;
     private long mTime;
     private double mTemperture;
@@ -13,6 +15,7 @@ public class CurrentWeather {
     private double mPrecipe;
     private String mSummary;
     private String mTimeZone;
+    private String mCity;
 
 
     public String getIcon() {
@@ -114,5 +117,13 @@ public class CurrentWeather {
 
     public void setTimeZone(String timeZone) {
         mTimeZone = timeZone;
+    }
+
+    public String getCity() {
+        return mCity;
+    }
+
+    public void setCity(String city) {
+        mCity = city;
     }
 }
