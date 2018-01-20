@@ -12,6 +12,8 @@ import android.widget.TextView;
 import com.example.victor.stormy.R;
 import com.example.victor.stormy.weather.Day;
 
+import java.util.Locale;
+
 public class DayAdapter extends BaseAdapter {
 
     private Context mContext;
@@ -52,6 +54,12 @@ public class DayAdapter extends BaseAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
+
+        Day day = mDays[position];
+
+        holder.iconImageView.setImageResource(day.getIconId());
+        holder.temperatureLabel.setText(String.format(Locale.getDefault(), "%d", day.getTemperatureMax()));
+        holder.dayLabel.setText(day.getDayOfTheWeek());
 
         return null;
     }
