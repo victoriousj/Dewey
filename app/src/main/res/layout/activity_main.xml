@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFC970B"
-    android:padding="32dp"
-    tools:context="com.example.victor.stormy.weather.ui.MainActivity">
+    android:background="@drawable/bg_gradient"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp"
+    tools:context=".ui.MainActivity">
 
     <ImageView
         android:id="@+id/imageView"
@@ -49,23 +52,81 @@
         android:textColor="@android:color/white"
         android:textSize="24sp" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/refreshImageView"
+        android:layout_centerHorizontal="true" />
+
     <ImageView
         android:id="@+id/iconImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/locationLabel"
-        android:layout_toLeftOf="@+id/locationLabel"
         android:layout_toStartOf="@+id/locationLabel"
         app:srcCompat="@drawable/clear_day" />
 
+    <ImageView
+        android:id="@+id/refreshImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        app:srcCompat="@drawable/refresh" />
+
+    <TextView
+        android:id="@+id/summaryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/navigation_buttons"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="84dp"
+        android:gravity="center_horizontal"
+        android:text="Getting current weather..."
+        android:textColor="#FFFFFF"
+        android:textSize="18sp" />
+
     <LinearLayout
+        android:id="@+id/navigation_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/timeLabel"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="22dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/hourlyButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/button_playing"
+            android:text="HOURLY"
+            android:textColor="#FFFFFFFF" />
+
+        <Button
+            android:id="@+id/dailyButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_playing"
+            android:text="7 DAY"
+            android:textColor="#FFFFFFFF" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/temperatureLabel"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
-        android:orientation="horizontal"
-        android:id="@+id/linearLayout">
+        android:orientation="horizontal">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -116,33 +177,5 @@
         </LinearLayout>
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/summaryLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="50dp"
-        android:gravity="center_horizontal"
-        android:text="Getting Weather..."
-        android:textColor="#FFFFFF"
-        android:textSize="18sp" />
-
-    <ImageView
-        android:id="@+id/refreshImageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        app:srcCompat="@drawable/refresh" />
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/refreshImageView"
-        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

@@ -1,4 +1,4 @@
-package com.example.victor.stormy.weather.ui;
+package com.example.victor.stormy.ui;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

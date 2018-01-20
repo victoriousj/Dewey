@@ -1,6 +1,7 @@
-package com.example.victor.stormy.weather.ui;
+package com.example.victor.stormy.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -17,12 +18,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.victor.stormy.DailyForecastActivity;
 import com.example.victor.stormy.R;
 import com.example.victor.stormy.weather.Current;
 import com.example.victor.stormy.weather.Day;
@@ -89,13 +90,15 @@ public class MainActivity extends AppCompatActivity {
     public ProgressBar mProgressBar;
     public ImageView mIconImageView;
     public ImageView mRefreshImageView;
+    public Button mHourlyButton;
+    public Button mDailyButton;
     //endregion
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        changeStatusBarColor();
+        HelperMethods.changeStatusBarColor(this);
 
         //region Properties
         mTimeLabel = findViewById(R.id.timeLabel);
@@ -107,11 +110,15 @@ public class MainActivity extends AppCompatActivity {
         mIconImageView = findViewById(R.id.iconImageView);
         mRefreshImageView = findViewById(R.id.refreshImageView);
         mProgressBar = findViewById(R.id.progressBar);
+        mHourlyButton = findViewById(R.id.hourlyButton);
+        mDailyButton = findViewById(R.id.dailyButton);
         //endregion
 
         mProgressBar.setVisibility(View.INVISIBLE);
 
         mRefreshImageView.setOnClickListener((View v) -> getForecast(latitude, longitude));
+        mHourlyButton.setOnClickListener((View v) -> Log.v(TAG, "Tap"));
+        mDailyButton.setOnClickListener((View v) -> startDailyActivity(v));
 
         requestUserLocation();
 
@@ -237,13 +244,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             AlertUserAboutConnectivityIssue();
         }
-    }
-
-    private void changeStatusBarColor() {
-        //set the status bar color to the same color as the background
-        Window window = getWindow();
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.parseColor("#FFFC970B"));
     }
 
     private void toggleRefresh() {
@@ -380,6 +380,14 @@ public class MainActivity extends AppCompatActivity {
     private void alertUserAboutError() {
         AlertDialogFragment dialogFragment = new AlertDialogFragment();
         dialogFragment.show(getFragmentManager(), "");
+    }
+
+
+    public void startDailyActivity(View view)
+    {
+        Log.v(TAG, "Daily Buttons");
+        Intent intent = new Intent(this, DailyForecastActivity.class);
+        startActivity(intent);
     }
 }
 
