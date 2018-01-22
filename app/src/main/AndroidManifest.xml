@@ -16,7 +16,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".ui.MainActivity"
-            android:label="Stormy"
+            android:label="Dewey"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +24,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".DailyForecastActivity"></activity>
+        <activity android:name=".ui.DailyForecastActivity" />
+        <activity android:name=".ui.HourlyForecastActivity"></activity>
     </application>
 
 </manifest>

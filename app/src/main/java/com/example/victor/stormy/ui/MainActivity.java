@@ -23,7 +23,6 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.example.victor.stormy.DailyForecastActivity;
 import com.example.victor.stormy.R;
 import com.example.victor.stormy.weather.Current;
 import com.example.victor.stormy.weather.Day;
@@ -48,11 +47,15 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = MainActivity.class.getSimpleName();
+    public static final String DAILY_FORECAST = "DAILY_FORECAST";
+    public static final String HOURLY_FORECAST = "HOURLY FORECAST";
+    public static final String LOCATION = "LOCATION";
 
     //region Member Variables
     final String apiKey = "9b0a1d40d2d860cd50c1419fe73287ee";
     double latitude;
     double longitude;
+    String city;
     private Forecast mForecast;
     private final LocationListener mLocationListener = new LocationListener() {
         @Override
@@ -117,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar.setVisibility(View.INVISIBLE);
 
         mRefreshImageView.setOnClickListener((View v) -> getForecast(latitude, longitude));
-        mHourlyButton.setOnClickListener((View v) -> Log.v(TAG, "Tap"));
+        mHourlyButton.setOnClickListener((View v) -> startHourlyActivity(v));
         mDailyButton.setOnClickListener((View v) -> startDailyActivity(v));
 
         requestUserLocation();
@@ -309,6 +312,11 @@ public class MainActivity extends AppCompatActivity {
             day.setIcon(jsonDay.getString("icon"));
             day.setTimeZone(timeZone);
             day.setTime(jsonDay.getLong("time"));
+            if (city != null) {
+                day.setCity(city);
+            } else {
+                day.setCity("In Your  Area");
+            }
 
             days[i] = day;
         }
@@ -355,6 +363,9 @@ public class MainActivity extends AppCompatActivity {
         weather.setSummary(currently.getString("summary"));
         weather.setTemperture(currently.getDouble("temperature"));
         weather.setCity(getCityName());
+        if (weather.getCity() != null) {
+            city = weather.getCity();
+        }
 
         Log.d(TAG, weather.getFormattedTime());
         return weather;
@@ -383,10 +394,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void startDailyActivity(View view)
-    {
-        Log.v(TAG, "Daily Buttons");
+    public void startDailyActivity(View view) {
         Intent intent = new Intent(this, DailyForecastActivity.class);
+        intent.putExtra(DAILY_FORECAST, mForecast.getDayForecast());
+        intent.putExtra(LOCATION, city);
+        startActivity(intent);
+    }
+
+    private void startHourlyActivity(View v) {
+        Intent intent = new Intent(this, HourlyForecastActivity.class);
+        intent.putExtra(HOURLY_FORECAST, mForecast.getHourlyForecast());
         startActivity(intent);
     }
 }

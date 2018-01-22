@@ -4,11 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="64dp"
+    android:paddingStart="32dp"
     android:paddingEnd="32dp"
-    android:paddingTop="4dp"
-    android:paddingBottom="4dp"
-    tools:background="#ffaa00">
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    tools:background="#3F51B5">
 
     <ImageView
         android:id="@+id/circleImageView"
@@ -16,16 +16,17 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        app:srcCompat="@drawable/bg_temperature" />
+        android:src="@drawable/bg_temperature" />
 
     <ImageView
         android:id="@+id/iconImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:paddingLeft="10dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:layout_toEndOf="@+id/circleImageView"
-        app:srcCompat="@drawable/clear_day" />
+        android:src="@drawable/clear_day" />
 
     <TextView
         tools:text="Wednesday"
@@ -35,7 +36,8 @@
         android:layout_centerVertical="true"
         android:layout_toEndOf="@+id/iconImageView"
         android:textColor="#FFFFFFFF"
-        android:paddingLeft="10dp"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:textSize="20sp" />
 
     <TextView
@@ -50,7 +52,7 @@
         android:layout_alignTop="@+id/circleImageView"
         android:gravity="center"
         tools:text="100"
-        android:textColor="#fff25019"
+        android:textColor="#2196F3"
 
         />
 </RelativeLayout>
