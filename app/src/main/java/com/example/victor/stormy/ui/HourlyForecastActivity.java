@@ -6,8 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.ThemedSpinnerAdapter;
-
 import com.example.victor.stormy.R;
 import com.example.victor.stormy.adapters.HourAdapter;
 import com.example.victor.stormy.weather.Hour;
@@ -24,7 +22,6 @@ public class HourlyForecastActivity extends AppCompatActivity {
         Hour[] mHours;
         RecyclerView mRecyclerView;
 
-        HelperMethods.changeStatusBarColor(this);
         mRecyclerView = findViewById(R.id.recyclerView);
 
         Intent intent = getIntent();

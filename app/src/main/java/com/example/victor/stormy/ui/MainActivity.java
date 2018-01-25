@@ -17,7 +17,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -108,7 +107,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        HelperMethods.changeStatusBarColor(this);
 
         //region Properties
         mTimeLabel = findViewById(R.id.timeLabel);
@@ -130,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
         mHourlyButton.setOnClickListener((View v) -> startHourlyActivity(v));
         mDailyButton.setOnClickListener((View v) -> startDailyActivity(v));
 
+        handleLocationPermission();
+
         getForecast(latitude, longitude);
     }
 
@@ -141,7 +141,6 @@ public class MainActivity extends AppCompatActivity {
             if (loc != null) {
                 latitude = loc.getLatitude();
                 longitude = loc.getLongitude();
-                getForecast(latitude, longitude);
             }
         } catch (SecurityException | NullPointerException e) {
             Log.e(TAG, "Exception: ", e);
@@ -194,9 +193,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getForecast(double latitude, double longitude) {
-        if (latitude == 0.0 && longitude == 0.0) {
-            handleLocationPermission();
-        }
+
         if (latitude != 0.0 && longitude != 0.0) {
             String weatherString = "https://api.forecast.io/forecast/" + apiKey + "/" + latitude + "," + longitude;
 
@@ -239,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
 
                 });
             } else {
-                AlertUserAboutConnectivityIssue();
+                alertUserAboutConnectivityIssue();
             }
         }
     }
@@ -250,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && latitude == 0.0 && longitude == 0.0) {
                 if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Call Permission")
+                            .setTitle("Location Permission")
                             .setMessage("Hi there! We can't tell you what the weather is without knowing your location, could you please grant it?")
                             .setPositiveButton("Yep", new DialogInterface.OnClickListener() {
                                 @Override
@@ -397,11 +394,6 @@ public class MainActivity extends AppCompatActivity {
         return weather;
     }
 
-    private void AlertUserAboutConnectivityIssue() {
-        NetworkUnavailableDialogFragment dialogFragment = new NetworkUnavailableDialogFragment();
-        dialogFragment.show(getFragmentManager(), "");
-    }
-
     private boolean isNetworkAvailable() {
         ConnectivityManager manager = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -414,11 +406,15 @@ public class MainActivity extends AppCompatActivity {
         return  isAvailable;
     }
 
+    private void alertUserAboutConnectivityIssue() {
+        NetworkUnavailableDialogFragment dialogFragment = new NetworkUnavailableDialogFragment();
+        dialogFragment.show(getFragmentManager(), "");
+    }
+
     private void alertUserAboutError() {
         AlertDialogFragment dialogFragment = new AlertDialogFragment();
         dialogFragment.show(getFragmentManager(), "");
     }
-
 
     public void startDailyActivity(View view) {
         if (latitude != 0.0 && longitude != 0.0) {

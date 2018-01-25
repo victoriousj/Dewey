@@ -7,20 +7,14 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.victor.stormy.R;
 import com.example.victor.stormy.adapters.DayAdapter;
-import com.example.victor.stormy.ui.HelperMethods;
-import com.example.victor.stormy.ui.MainActivity;
 import com.example.victor.stormy.weather.Day;
 
-import org.w3c.dom.Text;
-
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public class DailyForecastActivity extends Activity {
@@ -35,9 +29,6 @@ public class DailyForecastActivity extends Activity {
         setContentView(R.layout.activity_daily_forecast);
         mListView = findViewById(android.R.id.list);
         mTextView = findViewById(android.R.id.empty);
-
-        // Set the status bar color
-        HelperMethods.changeStatusBarColor(this);
 
         Intent intent = getIntent();
         String city = intent.getStringExtra(MainActivity.LOCATION);
