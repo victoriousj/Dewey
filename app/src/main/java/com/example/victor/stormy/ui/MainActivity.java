@@ -1,6 +1,8 @@
 package com.example.victor.stormy.ui;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -13,8 +15,11 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +27,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.victor.stormy.R;
 import com.example.victor.stormy.weather.Current;
@@ -50,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String DAILY_FORECAST = "DAILY_FORECAST";
     public static final String HOURLY_FORECAST = "HOURLY FORECAST";
     public static final String LOCATION = "LOCATION";
+    private static final int PERMISSIONS_REQUEST_CODE = 11;
 
     //region Member Variables
     final String apiKey = "9b0a1d40d2d860cd50c1419fe73287ee";
@@ -123,32 +130,21 @@ public class MainActivity extends AppCompatActivity {
         mHourlyButton.setOnClickListener((View v) -> startHourlyActivity(v));
         mDailyButton.setOnClickListener((View v) -> startDailyActivity(v));
 
-        requestUserLocation();
-
-        if (longitude != 0.0 && latitude != 0.0) {
-            getForecast(latitude, longitude);
-        }
+        getForecast(latitude, longitude);
     }
-
 
     private void requestUserLocation() {
         LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-        if (ActivityCompat.checkSelfPermission(this,
-            android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-        {
-            requestpermisions();
-        } else {
-            try {
-                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, mLocationListener);
-                Location loc = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (loc != null) {
-                    latitude = loc.getLatitude();
-                    longitude = loc.getLongitude();
-                }
-            } catch (SecurityException | NullPointerException e) {
-                Log.e(TAG, "Exception: ", e);
+        try {
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, mLocationListener);
+            Location loc = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (loc != null) {
+                latitude = loc.getLatitude();
+                longitude = loc.getLongitude();
+                getForecast(latitude, longitude);
             }
+        } catch (SecurityException | NullPointerException e) {
+            Log.e(TAG, "Exception: ", e);
         }
     }
 
@@ -171,8 +167,8 @@ public class MainActivity extends AppCompatActivity {
                 else { location = address.toString(); }
 
             } else {
-                String truncLat = String.format("%.2f", latitude);
-                String truncLon = String.format("%.2f", longitude);
+                String truncLat = String.format(Locale.getDefault(), "%.2f", latitude);
+                String truncLon = String.format(Locale.getDefault(), "%.2f", longitude);
                 location = String.format("Lat: %s, Lon: %s", truncLat, truncLon);
             }
         } catch (IOException e) {
@@ -197,55 +193,85 @@ public class MainActivity extends AppCompatActivity {
         return stateCode;
     }
 
-    public void requestpermisions() {
-        ActivityCompat.requestPermissions(this, new String[] {
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-        }, 1);
+    private void getForecast(double latitude, double longitude) {
+        if (latitude == 0.0 && longitude == 0.0) {
+            handleLocationPermission();
+        }
+        if (latitude != 0.0 && longitude != 0.0) {
+            String weatherString = "https://api.forecast.io/forecast/" + apiKey + "/" + latitude + "," + longitude;
+
+            // Set the color of the spinner loader to white
+            mProgressBar.getIndeterminateDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.MULTIPLY);
+
+
+            if (isNetworkAvailable()) {
+                toggleRefresh();
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        .url(weatherString)
+                        .build();
+
+                Call call = client.newCall(request);
+                call.enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        runOnUiThread(() -> toggleRefresh());
+                        alertUserAboutError();
+                        Log.e(TAG, "Exception caught:", e);
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        runOnUiThread(() -> toggleRefresh());
+                        try {
+                            String jsonDate = response.body().string();
+                            Log.v(TAG, jsonDate);
+                            if (response.isSuccessful()) {
+                                mForecast = parseForecastDetails(jsonDate);
+                                runOnUiThread(() -> updateDisplay());
+                            } else {
+                                alertUserAboutError();
+                            }
+                        } catch (IOException | JSONException e) {
+                            Log.e(TAG, "Exception caught: " + e);
+                        }
+                    }
+
+                });
+            } else {
+                AlertUserAboutConnectivityIssue();
+            }
+        }
     }
 
-    private void getForecast(double latitude, double longitude) {
-        String weatherString = "https://api.forecast.io/forecast/"+apiKey+"/"+latitude+","+longitude;
-
-        // Set the color of the spinner loader to white
-        mProgressBar.getIndeterminateDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.MULTIPLY);
-
-
-        if (isNetworkAvailable()) {
-            toggleRefresh();
-            OkHttpClient client = new OkHttpClient();
-            Request request = new Request.Builder()
-                    .url(weatherString)
-                    .build();
-
-            Call call = client.newCall(request);
-            call.enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    runOnUiThread(() -> toggleRefresh());
-                    alertUserAboutError();
-                    Log.e(TAG, "Exception caught:", e);
+    private void handleLocationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && latitude == 0.0 && longitude == 0.0) {
+                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Call Permission")
+                            .setMessage("Hi there! We can't tell you what the weather is without knowing your location, could you please grant it?")
+                            .setPositiveButton("Yep", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_CODE);
+                                }
+                            })
+                            .setNegativeButton("No thanks", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Toast.makeText(MainActivity.this, ":(", Toast.LENGTH_SHORT).show();
+                                    mSummaryLabel.setText(R.string.location_permission_denied);
+                                    mRefreshImageView.setVisibility(View.INVISIBLE);
+                                }
+                            }).show();
+                } else {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_CODE);
                 }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    runOnUiThread(() -> toggleRefresh());
-                    try {
-                        String jsonDate = response.body().string();
-                        Log.v(TAG, jsonDate);
-                        if (response.isSuccessful()) {
-                            mForecast = parseForecastDetails(jsonDate);
-                            runOnUiThread(() -> updateDisplay());
-                        } else {
-                            alertUserAboutError();
-                        }
-                    } catch (IOException | JSONException e) {
-                        Log.e(TAG, "Exception caught: " + e);
-                    }
-                }
-
-            });
-        } else {
-            AlertUserAboutConnectivityIssue();
+            } else {
+                requestUserLocation();
+            }
         }
     }
 
@@ -395,16 +421,24 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void startDailyActivity(View view) {
-        Intent intent = new Intent(this, DailyForecastActivity.class);
-        intent.putExtra(DAILY_FORECAST, mForecast.getDayForecast());
-        intent.putExtra(LOCATION, city);
-        startActivity(intent);
+        if (latitude != 0.0 && longitude != 0.0) {
+            Intent intent = new Intent(this, DailyForecastActivity.class);
+            intent.putExtra(DAILY_FORECAST, mForecast.getDayForecast());
+            intent.putExtra(LOCATION, city);
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Sorry, we do have any weather data to show you :(", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void startHourlyActivity(View v) {
-        Intent intent = new Intent(this, HourlyForecastActivity.class);
-        intent.putExtra(HOURLY_FORECAST, mForecast.getHourlyForecast());
-        startActivity(intent);
+        if (latitude != 0.0 && longitude != 0.0) {
+            Intent intent = new Intent(this, HourlyForecastActivity.class);
+            intent.putExtra(HOURLY_FORECAST, mForecast.getHourlyForecast());
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Sorry, we do have any weather data to show you :(", Toast.LENGTH_LONG).show();
+        }
     }
 }
 
