@@ -50,6 +50,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+
 public class MainActivity extends AppCompatActivity {
     public static final String TAG = MainActivity.class.getSimpleName();
     public static final String DAILY_FORECAST = "DAILY_FORECAST";
@@ -66,10 +68,6 @@ public class MainActivity extends AppCompatActivity {
     private final LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-//            requestUserLocation();
-//            if (latitude != 0.0 && longitude != 0.0) {
-//                getForecast(latitude, longitude);
-//            }
         }
 
         @Override
@@ -108,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
         //region Properties
         mTimeLabel = findViewById(R.id.timeLabel);
         mLocationLabel = findViewById(R.id.locationLabel);
@@ -125,71 +129,10 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar.setVisibility(View.INVISIBLE);
 
         mRefreshImageView.setOnClickListener((View v) -> getForecast(latitude, longitude));
-        mHourlyButton.setOnClickListener((View v) -> startHourlyActivity(v));
-        mDailyButton.setOnClickListener((View v) -> startDailyActivity(v));
+        mHourlyButton.setOnClickListener(this::startHourlyActivity);
+        mDailyButton.setOnClickListener(this::startDailyActivity);
 
         handleLocationPermission();
-
-        getForecast(latitude, longitude);
-    }
-
-    private void requestUserLocation() {
-        LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        try {
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, mLocationListener);
-            Location loc = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (loc != null) {
-                latitude = loc.getLatitude();
-                longitude = loc.getLongitude();
-            }
-        } catch (SecurityException | NullPointerException e) {
-            Log.e(TAG, "Exception: ", e);
-        }
-    }
-
-    private String getCityName() {
-        if (latitude == 0.0 || longitude == 0.0) return null;
-
-        String location = "";
-        Geocoder geo = new Geocoder(this, Locale.getDefault());
-        try {
-            List<Address> addressList = geo.getFromLocation(latitude, longitude, 1);
-            if (addressList.size() > 0) {
-                Address address = addressList.get(0);
-                String city = address.getLocality();
-                String state = getUSStateCode(address);
-
-                if (state == null) { state = address.getAdminArea(); }
-
-                if (city != null && state != null) { location = String.format("%s, %s", city, state); }
-                else if (city != null) { location = city; }
-                else { location = address.toString(); }
-
-            } else {
-                String truncLat = String.format(Locale.getDefault(), "%.2f", latitude);
-                String truncLon = String.format(Locale.getDefault(), "%.2f", longitude);
-                location = String.format("Lat: %s, Lon: %s", truncLat, truncLon);
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "IOException", e);
-        }
-        return location;
-    }
-
-    private String getUSStateCode(Address USAddress){
-        String fullAddress = "";
-        for(int j = 0; j <= USAddress.getMaxAddressLineIndex(); j++)
-            if (USAddress.getAddressLine(j) != null)
-                fullAddress = fullAddress + " " + USAddress.getAddressLine(j);
-
-        String stateCode = null;
-        Pattern pattern = Pattern.compile(" [A-Z]{2} ");
-        String helper = fullAddress.toUpperCase().substring(0, fullAddress.toUpperCase().indexOf("USA"));
-        Matcher matcher = pattern.matcher(helper);
-        while (matcher.find())
-            stateCode = matcher.group().trim();
-
-        return stateCode;
     }
 
     private void getForecast(double latitude, double longitude) {
@@ -199,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
 
             // Set the color of the spinner loader to white
             mProgressBar.getIndeterminateDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.MULTIPLY);
-
 
             if (isNetworkAvailable()) {
                 toggleRefresh();
@@ -225,7 +167,11 @@ public class MainActivity extends AppCompatActivity {
                             Log.v(TAG, jsonDate);
                             if (response.isSuccessful()) {
                                 mForecast = parseForecastDetails(jsonDate);
-                                runOnUiThread(() -> updateDisplay());
+                                runOnUiThread(() -> {
+                                    updateDisplay();
+                                    mProgressBar.setVisibility(View.INVISIBLE);
+                                    mRefreshImageView.setVisibility(View.VISIBLE);
+                                });
                             } else {
                                 alertUserAboutError();
                             }
@@ -244,31 +190,41 @@ public class MainActivity extends AppCompatActivity {
     private void handleLocationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && latitude == 0.0 && longitude == 0.0) {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Location Permission")
-                            .setMessage("Hi there! We can't tell you what the weather is without knowing your location, could you please grant it?")
-                            .setPositiveButton("Yep", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_CODE);
-                                }
-                            })
-                            .setNegativeButton("No thanks", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Toast.makeText(MainActivity.this, ":(", Toast.LENGTH_SHORT).show();
-                                    mSummaryLabel.setText(R.string.location_permission_denied);
-                                    mRefreshImageView.setVisibility(View.INVISIBLE);
-                                }
-                            }).show();
+                    ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && latitude == 0.0 && longitude == 0.0) {
+                if (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)) {
+                    alertUserForLocationPermission();
                 } else {
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_CODE);
+                    requestPermissions(new String[]{ACCESS_FINE_LOCATION}, PERMISSIONS_REQUEST_CODE);
                 }
             } else {
                 requestUserLocation();
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == PERMISSIONS_REQUEST_CODE) {
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                requestUserLocation();
+                toggleRefresh();
+            }
+        }
+    }
+
+    private void requestUserLocation() {
+        LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        try {
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, mLocationListener);
+            Location loc = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (loc != null) {
+                latitude = loc.getLatitude();
+                longitude = loc.getLongitude();
+                getForecast(latitude, longitude);
+            }
+        } catch (SecurityException | NullPointerException e) {
+            Log.e(TAG, "Exception: ", e);
         }
     }
 
@@ -394,6 +350,51 @@ public class MainActivity extends AppCompatActivity {
         return weather;
     }
 
+    private String getCityName() {
+        if (latitude == 0.0 || longitude == 0.0) return null;
+
+        String location = "";
+        Geocoder geo = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addressList = geo.getFromLocation(latitude, longitude, 1);
+            if (addressList.size() > 0) {
+                Address address = addressList.get(0);
+                String city = address.getLocality();
+                String state = getUSStateCode(address);
+
+                if (state == null) { state = address.getAdminArea(); }
+
+                if (city != null && state != null) { location = String.format("%s, %s", city, state); }
+                else if (city != null) { location = city; }
+                else { location = address.toString(); }
+
+            } else {
+                String truncLat = String.format(Locale.getDefault(), "%.2f", latitude);
+                String truncLon = String.format(Locale.getDefault(), "%.2f", longitude);
+                location = String.format("Lat: %s, Lon: %s", truncLat, truncLon);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "IOException", e);
+        }
+        return location;
+    }
+
+    private String getUSStateCode(Address USAddress){
+        String fullAddress = "";
+        for(int j = 0; j <= USAddress.getMaxAddressLineIndex(); j++)
+            if (USAddress.getAddressLine(j) != null)
+                fullAddress = fullAddress + " " + USAddress.getAddressLine(j);
+
+        String stateCode = null;
+        Pattern pattern = Pattern.compile(" [A-Z]{2} ");
+        String helper = fullAddress.toUpperCase().substring(0, fullAddress.toUpperCase().indexOf("USA"));
+        Matcher matcher = pattern.matcher(helper);
+        while (matcher.find())
+            stateCode = matcher.group().trim();
+
+        return stateCode;
+    }
+
     private boolean isNetworkAvailable() {
         ConnectivityManager manager = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -406,6 +407,7 @@ public class MainActivity extends AppCompatActivity {
         return  isAvailable;
     }
 
+    //region Error Alerts
     private void alertUserAboutConnectivityIssue() {
         NetworkUnavailableDialogFragment dialogFragment = new NetworkUnavailableDialogFragment();
         dialogFragment.show(getFragmentManager(), "");
@@ -416,6 +418,13 @@ public class MainActivity extends AppCompatActivity {
         dialogFragment.show(getFragmentManager(), "");
     }
 
+    private void alertUserForLocationPermission() {
+        LocationAlertDialog dialog = new LocationAlertDialog();
+        dialog.show(getFragmentManager(), "");
+    }
+    //endregion
+
+    //region Traversal Calls
     public void startDailyActivity(View view) {
         if (latitude != 0.0 && longitude != 0.0) {
             Intent intent = new Intent(this, DailyForecastActivity.class);
@@ -436,5 +445,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Sorry, we do have any weather data to show you :(", Toast.LENGTH_LONG).show();
         }
     }
+    //endregion
+
 }
 
